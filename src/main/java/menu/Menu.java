@@ -2,9 +2,15 @@ package menu;
 
 import java.util.*;
 import commands.*;
+import utils.ErrorNotifier;
 import vegetables.Salad;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 public class Menu {
+
+    private static final Logger logger = LogManager.getLogger(Menu.class);
+
     protected Map<String, Command> commands = new LinkedHashMap<>();
     private Scanner sc = new Scanner(System.in);
     protected Salad salad = new Salad();   // порожній салат на старті
@@ -34,10 +40,19 @@ public class Menu {
 
     public void execute(String choice) {
         Command command = commands.get(choice);
-        if (command != null)
-            command.execute();
-        else
+
+        if (command != null) {
+            logger.info("Виконується команда: {}", choice);
+            try {
+                command.execute();
+            } catch (Exception e) {
+                logger.error("Помилка при виконанні команди '{}'", choice, e);
+                ErrorNotifier.sendErrorEmail(e);
+            }
+        } else {
+            logger.warn("Невірний вибір: {}", choice);
             System.out.println("Невірний вибір!");
+        }
     }
 
     public void start() {
@@ -47,6 +62,7 @@ public class Menu {
             String choice = sc.nextLine().trim().toLowerCase();
 
             if (choice.equals("вихід")) {
+                logger.info("Користувач завершив роботу програми");
                 System.out.println("\nВихід з програми...");
                 break;
             }

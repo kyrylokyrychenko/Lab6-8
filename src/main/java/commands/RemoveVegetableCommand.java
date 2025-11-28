@@ -1,10 +1,14 @@
 package commands;
 
+import utils.ErrorNotifier;
 import vegetables.Salad;
-
 import java.util.Scanner;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 public class RemoveVegetableCommand implements Command {
+
+    private static final Logger logger = LogManager.getLogger(RemoveVegetableCommand.class);
 
     private final Salad salad;
     private final Scanner sc = new Scanner(System.in);
@@ -15,15 +19,23 @@ public class RemoveVegetableCommand implements Command {
 
     @Override
     public void execute() {
-        int index = requestIndex();
+        try {
+            int index = requestIndex();
 
-        if (!isValidIndex(index)) {
-            System.out.println("Некоректний номер!");
-            return;
+            if (!isValidIndex(index)) {
+                logger.warn("Спроба видалення неіснуючого індекса: {}", index);
+                System.out.println("Некоректний номер!");
+                return;
+            }
+
+            salad.remove(index - 1);
+            logger.info("Овоч видалено з позиції {}", index);
+
+            System.out.println("Овоч видалено.");
+        } catch (Exception e) {
+            logger.error("Помилка під час видалення овоча", e);
+            ErrorNotifier.sendErrorEmail(e);
         }
-
-        salad.remove(index - 1);
-        System.out.println("Овоч видалено.");
     }
 
     private int requestIndex() {
